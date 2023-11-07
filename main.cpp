@@ -8,6 +8,7 @@
 
 using namespace std;
 
+//todo: make f pass into class by construct or something; also split code to diff file as lib
 double f(double x, double y) {
     return pow((x-y), 2) + 1;
 }
