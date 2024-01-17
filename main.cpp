@@ -6,8 +6,6 @@
 #include <cfloat>
 // рунге-кутта 4 порядка точности (формула 33)
 
-using namespace std;
-
 // todo: make f pass into class by construct or something; also split code to diff file as lib
 double f(double x, double y)
 {
@@ -19,10 +17,10 @@ double f(double x, double y)
  * @param ifs - file stream
  * @param res - vector to write
  */
-bool read_file(ifstream &ifs, vector<double> &res)
+bool read_file(std::ifstream &ifs, std::vector<double> &res)
 {
     const int param_count = 6;
-    res = vector<double>(param_count);
+    res = std::vector<double>(param_count);
     for (int i = 0; i < param_count; ++i)
     {
         ifs >> res[i];
@@ -40,11 +38,11 @@ struct OutStruct
     double y_l; // последний y
 };
 
-ofstream &operator<<(ofstream &ofs, const OutStruct &e)
+std::ofstream &operator<<(std::ofstream &ofs, const OutStruct &e)
 {
     const char sep = ' ';
-    ofs << e.er << sep << e.h << sep << e.icod << endl;
-    ofs << e.x_l << sep << e.y_l << endl;
+    ofs << e.er << sep << e.h << sep << e.icod << std::endl;
+    ofs << e.x_l << sep << e.y_l << std::endl;
     return ofs;
 }
 
@@ -53,7 +51,7 @@ ofstream &operator<<(ofstream &ofs, const OutStruct &e)
  * @param ofs - file stream
  * @param data - data to write
  */
-bool out_file(ofstream &ofs, OutStruct &data)
+bool out_file(std::ofstream &ofs, OutStruct &data)
 {
     ofs << data;
     return !ofs.fail();
@@ -61,6 +59,8 @@ bool out_file(ofstream &ofs, OutStruct &data)
 class RungeKuttaSolver
 {
 public:
+    explicit RungeKuttaSolver(double (*f)(double, double)) : f(f){};
+
     /*
      * Runge-Kutta 4th order
      * @param x_start - start x
@@ -83,7 +83,7 @@ public:
         int step = back ? -1 : 1;
         back ? h = -h : h = h;
 
-        vector<double> y_arr(step_count + 1, 0);
+        std::vector<double> y_arr(step_count + 1, 0);
         back ? y_arr[step_count] = y_0 : y_arr[0] = y_0;
 
         for (int i = start; back ? i >= end : i <= end; i += step)
@@ -118,7 +118,9 @@ public:
      */
     double calc_h_min(double a, double b)
     {
-        return macheps() * max(max(abs(a), abs(b)), DBL_MIN); // DBL_MIN Минимальное положительное значение.
+        return macheps() * std::max(std::max(std::abs(a),
+                                             std::abs(b)),
+                                    DBL_MIN); // DBL_MIN minimal double value
     }
 
     /*
@@ -129,12 +131,15 @@ public:
      */
     double runge_calc_error(double y0, double y1, int p = 4)
     {
-        double u = abs(y0 - y1);
+        double u = std::abs(y0 - y1);
         double d = (pow(2, p) - 1);
         return u / d;
     }
 
 protected:
+    //reference to function f(x, y)
+    double (*f)(double, double);
+
     double calc_k1(double x0, double y0, double h)
     {
         return h * (f(x0, y0));
@@ -192,7 +197,7 @@ protected:
  */
 int calc(double a, double b, double c, double yc, double h, double eps, OutStruct &out)
 {
-    auto r = RungeKuttaSolver();
+    auto r = RungeKuttaSolver(f);
 
     // init vars
     bool is_back = (c == b);
@@ -208,7 +213,7 @@ int calc(double a, double b, double c, double yc, double h, double eps, OutStruc
     y_last_next = r.runge_kutt_o4(a, b, yc, h, x_last_next, is_back);
     int iter = 0;
 
-    cout << "i | y | errorP | error | h" << endl;
+    std::cout << "i | y | errorP | error | h" << std::endl;
 
     /*
      * It does following:
@@ -221,7 +226,7 @@ int calc(double a, double b, double c, double yc, double h, double eps, OutStruc
         iter++;
 
         y_last = y_last_next;
-        x_last = x_last_next;
+        //x_last = x_last_next;
 
         h /= 2;
         y_last_next = r.runge_kutt_o4(a, b, yc, h / 2, x_last_next, is_back);
@@ -252,7 +257,7 @@ int calc(double a, double b, double c, double yc, double h, double eps, OutStruc
     return icod;
 }
 
-int init_calc(const vector<double> &inp, OutStruct &out)
+int init_calc(const std::vector<double> &inp, OutStruct &out)
 {
     return calc(inp[0], inp[1], inp[2], inp[3], inp[4], inp[5], out);
 }
@@ -261,10 +266,10 @@ int main()
 {
     int icod = 0;
 
-    string INP_FILE_PATH = "data.txt";
-    string O_FILE_PATH = "rez.txt";
+    std::string INP_FILE_PATH = "data.txt";
+    std::string O_FILE_PATH = "rez.txt";
 
-    ifstream ifs(INP_FILE_PATH);
+    std::ifstream ifs(INP_FILE_PATH);
     if (!ifs.is_open())
     {
         icod = -1; // file cannot be accessed
@@ -272,7 +277,7 @@ int main()
         return icod;
     }
 
-    vector<double> input_v;
+    std::vector<double> input_v;
 
     if (!read_file(ifs, input_v))
     {
@@ -303,7 +308,7 @@ int main()
         break;
     }
 
-    ofstream ofs(O_FILE_PATH);
+    std::ofstream ofs(O_FILE_PATH);
 
     if (!ofs.is_open())
     {
@@ -314,3 +319,4 @@ int main()
     ofs << out;
     return icod;
 }
+	
