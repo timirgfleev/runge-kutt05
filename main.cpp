@@ -9,17 +9,20 @@
 using namespace std;
 
 // todo: make f pass into class by construct or something; also split code to diff file as lib
-double f(double x, double y)
-{
-    return pow((x - y), 2) + 1;
+// double f(double x, double y)
+// {
+//     return pow((x - y), 2) + 1;
+// }
+
+double f(double x, double y) {
+    return x * exp(2 * x + 3);
 }
 
-
 /*
-* @return false if fail
-* @param ifs - file stream
-* @param res - vector to write
-*/
+ * @return false if fail
+ * @param ifs - file stream
+ * @param res - vector to write
+ */
 bool read_file(ifstream &ifs, vector<double> &res)
 {
     const int param_count = 6;
@@ -59,69 +62,9 @@ bool out_file(ofstream &ofs, OutStruct &data)
     ofs << data;
     return !ofs.fail();
 }
-
-class Runge
+class RungeKuttaSolver
 {
 public:
-    int calc(double a, double b, double c, double yc, double h, double eps, OutStruct &out)
-    {
-        // init vars
-        bool is_back = (c == b);
-        int icod;
-        double y_last, y_last_next, x_last, x_last_next;
-        double error = -1, error_p;
-
-        double h_min = calc_h_min(a, b);
-
-        bool is_continue = true;
-
-        // init compare buffer value
-        y_last_next = runge_kutt_o4(a, b, yc, h, x_last_next, is_back);
-        int iter = 0;
-        cout << "i | y | errorP | error" << endl;
-
-        /*
-         * It does following:
-         * Calc for h and h/2
-         * untill error < eps
-         * or error_p <= error (that means error is increasing)
-         */
-        while (is_continue)
-        {
-            iter++;
-
-            y_last = y_last_next;
-            x_last = x_last_next;
-
-            h /= 2;
-            y_last_next = runge_kutt_o4(a, b, yc, h / 2, x_last_next, is_back);
-
-            error_p = error;
-            error = runge_calc_error(y_last, y_last_next); // правило рунге
-
-            cout << iter << ' ' << y_last_next << ' ' << error_p << ' ' << error << endl;
-
-            if (error < eps)
-            {
-                is_continue = false;
-                icod = 0;
-            }
-            if (error_p <= error && error_p != -1)
-            {
-                is_continue = false;
-                icod = 1;
-            }
-            if (h < h_min)
-            {
-                is_continue = false;
-                icod = 2;
-            }
-        }
-
-        out = OutStruct{error, h, icod, x_last_next, y_last_next};
-        return icod;
-    }
-
     /*
      * Runge-Kutta 4th order
      * @param x_start - start x
@@ -139,12 +82,17 @@ public:
         double x = x_start, y, yp = y_0;
         double res;
 
+
+        //todo: 0!!!
+        vector<double> y_arr(step_count + 1, 0);
+
         int start = back ? step_count : 1;
-        int end = back ? 0 : step_count + 1;
+        int end = back ? 0 : step_count;
         int step = back ? -1 : 1;
 
-        for (int i = start; back ? i > end : i < end; i += step)
+        for (int i = start; back ? i > end : i <= end; i += step)
         {
+            y_arr[i] = yp;
             x = x_start + h * i;
             y = calc_y1(x, yp, h);
             yp = y;
@@ -154,6 +102,39 @@ public:
         res = y;
 
         return res;
+    }
+
+    /*
+     * @return machine epsilon
+     */
+    double macheps()
+    {
+        double e = 1.0;
+
+        while (1.0 + (e / 2.0) > 1.0)
+            e /= 2.0;
+        return e;
+    }
+
+    /*
+     * @return min step value according to machine epsilon
+     */
+    double calc_h_min(double a, double b)
+    {
+        return macheps() * max(max(abs(a), abs(b)), DBL_MIN); // DBL_MIN Минимальное положительное значение.
+    }
+
+    /*
+     * @param y0 - y0
+     * @param y1 - y1
+     * @param p - order of method (4 by default)
+     * @return error value (double)
+     */
+    double runge_calc_error(double y0, double y1, int p = 4)
+    {
+        double u = abs(y0 - y1);
+        double d = (pow(2, p) - 1);
+        return u / d;
     }
 
 protected:
@@ -184,12 +165,12 @@ protected:
     }
 
     /*
-    * Runge-Kutta 4th order formula
-    * @param x - x0
-    * @param y0 - y0
-    * @param h - step
-    * @return y1
-    */
+     * Runge-Kutta 4th order formula
+     * @param x - x0
+     * @param y0 - y0
+     * @param h - step
+     * @return y1
+     */
     double calc_y1(double x, double y0, double h)
     {
         double k1 = calc_k1(x, y0, h);
@@ -199,56 +180,89 @@ protected:
         double y1 = y0 + (k1 + 3 * k2 + 3 * k3 + k4) / 8;
         return y1;
     }
-
-    /*
-     * @param y0 - y0
-     * @param y1 - y1
-     * @param p - order of method (4 by default)
-     * @return error value (double)
-     */
-    double runge_calc_error(double y0, double y1, int p = 4)
-    {
-        double u = abs(y0 - y1);
-        double d = (pow(2, p) - 1);
-        return u / d;
-    }
-
-    /*
-     * @return machine epsilon
-     */
-    double macheps()
-    {
-        double e = 1.0;
-
-        while (1.0 + (e / 2.0) > 1.0)
-            e /= 2.0;
-        return e;
-    }
-
-    /*
-     * @return min step value according to machine epsilon
-     */
-    double calc_h_min(double a, double b)
-    {
-        return macheps() * max(max(abs(a), abs(b)), DBL_MIN); // DBL_MIN Минимальное положительное значение.
-    }
 };
 
 /*
- * res:
- * a, b, c, yc,
- * H start, eps
+ * @return icod
+ * @param a - start x
+ * @param b - end x
+ * @param c - x0
+ * @param yc - y(x0)
+ * @param h - step
+ * @param eps - error
+ * @param out - output struct
+ * @return icod
  */
+int calc(double a, double b, double c, double yc, double h, double eps, OutStruct &out)
+{
+    auto r = RungeKuttaSolver();
+
+    // init vars
+    bool is_back = (c == b);
+    int icod;
+    double y_last, y_last_next, x_last, x_last_next;
+    double error = -1, error_p;
+
+    double h_min = r.calc_h_min(a, b);
+
+    bool is_continue = true;
+
+    // init compare buffer value
+    y_last_next = r.runge_kutt_o4(a, b, yc, h, x_last_next, is_back);
+    int iter = 0;
+    cout << "i | y | errorP | error | h" << endl;
+
+    /*
+     * It does following:
+     * Calc for h and h/2
+     * untill error < eps
+     * or error_p <= error (that means error is increasing)
+     */
+    while (is_continue)
+    {
+        iter++;
+
+        y_last = y_last_next;
+        x_last = x_last_next;
+
+        h /= 2;
+        y_last_next = r.runge_kutt_o4(a, b, yc, h / 2, x_last_next, is_back);
+
+        error_p = error;
+        error = r.runge_calc_error(y_last, y_last_next); // правило рунге
+
+        std::cout << iter << ' ' << y_last_next << ' ' << error_p << ' ' << error << ' ' << h << std::endl;
+
+        if (error < eps)
+        {
+            is_continue = false;
+            icod = 0;
+        }
+        if (error_p <= error && error_p != -1)
+        {
+            is_continue = false;
+            icod = 1;
+        }
+        if (h < h_min)
+        {
+            is_continue = false;
+            icod = 2;
+        }
+    }
+
+    out = OutStruct{error, h, icod, x_last_next, y_last_next};
+    return icod;
+}
 
 int init_calc(const vector<double> &inp, OutStruct &out)
 {
-    return Runge().calc(inp[0], inp[1], inp[2], inp[3], inp[4], inp[5], out);
+    return calc(inp[0], inp[1], inp[2], inp[3], inp[4], inp[5], out);
 }
 
 int main()
 {
     int icod = 0;
-
+    
     string INP_FILE_PATH = "data.txt";
     string O_FILE_PATH = "rez.txt";
 
@@ -256,6 +270,7 @@ int main()
     if (!ifs.is_open())
     {
         icod = -1; // file cannot be accessed
+        std::cout << "No input file"  << std::endl;
         return icod;
     }
 
@@ -264,16 +279,39 @@ int main()
     if (!read_file(ifs, input_v))
     {
         icod = -2; // cannot read file
+        std::cout << "Cant read inp file"  << std::endl;
         return icod;
     }
+    
 
     OutStruct out;
     icod = init_calc(input_v, out);
-    ofstream ofs(O_FILE_PATH);
+
+    std::cout << "icod: " << icod << std::endl;
+    std::cout << "Calc stop with code: ";
+
+    switch (icod)
+    {
+    case 0:
+        std::cout << "error < eps, OK" << std::endl;
+        break;
+    case 1:
+        std::cout << "Error is increasing" << std::endl;
+        break;
+    case 2:
+        std::cout << "h < h_min" << std::endl;
+        break;
     
+    default:
+        break;
+    }
+
+    ofstream ofs(O_FILE_PATH);
+
     if (!ofs.is_open())
     {
         icod = -1; // file cannot be accessed
+        std::cout << "no access file out" << std::endl;
         return icod;
     }
     ofs << out;
