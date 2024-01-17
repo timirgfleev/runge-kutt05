@@ -9,14 +9,10 @@
 using namespace std;
 
 // todo: make f pass into class by construct or something; also split code to diff file as lib
-// double f(double x, double y)
-// {
-//     return pow((x - y), 2) + 1;
-// }
-
 double f(double x, double y) {
-    return x * exp(2 * x + 3);
+    return x - y;
 }
+
 
 /*
  * @return false if fail
@@ -84,18 +80,24 @@ public:
 
 
         //todo: 0!!!
-        vector<double> y_arr(step_count + 1, 0);
 
-        int start = back ? step_count : 1;
+        int start = back ? step_count-1 : 1; //start skip first
         int end = back ? 0 : step_count;
         int step = back ? -1 : 1;
 
-        for (int i = start; back ? i > end : i <= end; i += step)
+        vector<double> y_arr(step_count + 1, 0);
+        
+        back ? y_arr[step_count] = y_0 : y_arr[0] = y_0;
+        
+        back ? h = -h : h = h;
+        //not sure on >= end so gotta test it....
+        for (int i = start; back ? i >= end : i <= end; i += step)
         {
-            y_arr[i] = yp;
             x = x_start + h * i;
             y = calc_y1(x, yp, h);
             yp = y;
+
+            y_arr[i] = y;
         }
 
         x_l = x;
@@ -210,6 +212,7 @@ int calc(double a, double b, double c, double yc, double h, double eps, OutStruc
     // init compare buffer value
     y_last_next = r.runge_kutt_o4(a, b, yc, h, x_last_next, is_back);
     int iter = 0;
+
     cout << "i | y | errorP | error | h" << endl;
 
     /*
