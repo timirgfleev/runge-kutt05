@@ -33,18 +33,19 @@ public:
         int start = back ? step_count - 1 : 1; // start does skip first element
         int end = back ? 0 : step_count;
         int step = back ? -1 : 1;
-        back ? h = -h : h = h;
+
+        double h_calc = back ? -h : h; // h_calc is used to calculate y1: if back is true, then h_calc is negative
 
         y_arr = std::vector<double>(step_count + 1, 0);
         x_arr = std::vector<double>(step_count + 1, 0);
 
         back ? y_arr[step_count] = y_0 : y_arr[0] = y_0;
-        back ? x_arr[step_count] = x_start : x_arr[0] = x_end;
+        back ? x_arr[step_count] = x_end : x_arr[0] = x_start;
 
         for (int i = start; back ? i >= end : i <= end; i += step)
         {
             x = x_start + h * i;
-            y = calc_y1(x, yp, h);
+            y = calc_y1(x, yp, h_calc);
             yp = y;
 
             x_arr[i] = x;
