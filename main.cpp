@@ -9,10 +9,10 @@
 using namespace std;
 
 // todo: make f pass into class by construct or something; also split code to diff file as lib
-double f(double x, double y) {
+double f(double x, double y)
+{
     return x - y;
 }
-
 
 /*
  * @return false if fail
@@ -78,19 +78,14 @@ public:
         double x = x_start, y, yp = y_0;
         double res;
 
-
-        //todo: 0!!!
-
-        int start = back ? step_count-1 : 1; //start skip first
+        int start = back ? step_count - 1 : 1; // start skip first
         int end = back ? 0 : step_count;
         int step = back ? -1 : 1;
+        back ? h = -h : h = h;
 
         vector<double> y_arr(step_count + 1, 0);
-        
         back ? y_arr[step_count] = y_0 : y_arr[0] = y_0;
-        
-        back ? h = -h : h = h;
-        //not sure on >= end so gotta test it....
+
         for (int i = start; back ? i >= end : i <= end; i += step)
         {
             x = x_start + h * i;
@@ -265,7 +260,7 @@ int init_calc(const vector<double> &inp, OutStruct &out)
 int main()
 {
     int icod = 0;
-    
+
     string INP_FILE_PATH = "data.txt";
     string O_FILE_PATH = "rez.txt";
 
@@ -273,7 +268,7 @@ int main()
     if (!ifs.is_open())
     {
         icod = -1; // file cannot be accessed
-        std::cout << "No input file"  << std::endl;
+        std::cout << "No input file" << std::endl;
         return icod;
     }
 
@@ -282,10 +277,9 @@ int main()
     if (!read_file(ifs, input_v))
     {
         icod = -2; // cannot read file
-        std::cout << "Cant read inp file"  << std::endl;
+        std::cout << "Cant read inp file" << std::endl;
         return icod;
     }
-    
 
     OutStruct out;
     icod = init_calc(input_v, out);
@@ -304,7 +298,7 @@ int main()
     case 2:
         std::cout << "h < h_min" << std::endl;
         break;
-    
+
     default:
         break;
     }
