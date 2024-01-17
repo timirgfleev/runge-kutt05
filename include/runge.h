@@ -3,14 +3,18 @@
 #include <cmath>
 #include <cfloat>
 #include <vector>
-
+/*
+ * Runge-Kutta 4th order solver
+ * @param f - function f(x, y) (implicates y' = f(x, y)
+ */
 class RungeKuttaSolver
 {
 public:
-    explicit RungeKuttaSolver(double (*f)(double, double)) : f(f){};
+    explicit RungeKuttaSolver(double (*f)(double, double)) : f(f), y_arr(), x_arr(){};
 
     /*
      * Runge-Kutta 4th order
+     * saves x and y values to x_arr and y_arr
      * @param x_start - start x
      * @param x_end - end x
      * @param y_0 - y(x_start)
@@ -26,13 +30,16 @@ public:
         double x = x_start, y, yp = y_0;
         double res;
 
-        int start = back ? step_count - 1 : 1; // start skip first
+        int start = back ? step_count - 1 : 1; // start does skip first element
         int end = back ? 0 : step_count;
         int step = back ? -1 : 1;
         back ? h = -h : h = h;
 
-        std::vector<double> y_arr(step_count + 1, 0);
+        y_arr = std::vector<double>(step_count + 1, 0);
+        x_arr = std::vector<double>(step_count + 1, 0);
+
         back ? y_arr[step_count] = y_0 : y_arr[0] = y_0;
+        back ? x_arr[step_count] = x_start : x_arr[0] = x_end;
 
         for (int i = start; back ? i >= end : i <= end; i += step)
         {
@@ -40,6 +47,7 @@ public:
             y = calc_y1(x, yp, h);
             yp = y;
 
+            x_arr[i] = x;
             y_arr[i] = y;
         }
 
@@ -84,9 +92,27 @@ public:
         return u / d;
     }
 
+    /*
+     * @return x array
+     */
+    std::vector<double> get_x() const
+    {
+        return x_arr;
+    }
+
+    /*
+     * @return y array
+     */
+    std::vector<double> get_y() const
+    {
+        return y_arr;
+    }
+
 protected:
-    //reference to function f(x, y)
+    // reference to function f(x, y)
     double (*f)(double, double);
+    std::vector<double> y_arr;
+    std::vector<double> x_arr;
 
     double calc_k1(double x0, double y0, double h)
     {
