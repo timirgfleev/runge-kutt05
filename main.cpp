@@ -213,6 +213,9 @@ protected:
         return u / d;
     }
 
+    /*
+     * @return machine epsilon
+     */
     double macheps()
     {
         double e = 1.0;
@@ -222,6 +225,9 @@ protected:
         return e;
     }
 
+    /*
+     * @return min step value according to machine epsilon
+     */
     double calc_h_min(double a, double b)
     {
         return macheps() * max(max(abs(a), abs(b)), DBL_MIN); // DBL_MIN Минимальное положительное значение.
