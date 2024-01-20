@@ -1,5 +1,10 @@
 cmake_minimum_required(VERSION 3.22)
+
+set(CMAKE_BUILD_TYPE Debug)
+
 project(runge)
+
+
 
 set(CMAKE_CXX_STANDARD 14)
 
